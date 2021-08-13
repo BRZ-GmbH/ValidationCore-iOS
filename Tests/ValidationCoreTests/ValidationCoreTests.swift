@@ -1,23 +1,19 @@
 import Foundation
-import Quick
 import Nimble
-import OHHTTPStubsSwift
 import OHHTTPStubs
-import XCTest
+import OHHTTPStubsSwift
+import Quick
 import ValidationCore
-
+import XCTest
 
 class ValidationCoreSpec: QuickSpec {
-    
     override func spec() {
         describe("Compatibility Test") {
-            
-            var validationCore : ValidationCore!
-            let testDataProvider : TestDataProvider! = TestDataProvider()
-            
-            beforeEach {
-            }
-            
+            var validationCore: ValidationCore!
+            let testDataProvider: TestDataProvider! = TestDataProvider()
+
+            beforeEach {}
+
             for testData in testDataProvider.testData {
                 it(testData.testContext.description) {
                     let dateService = TestDateService(testData)
@@ -37,16 +33,16 @@ class ValidationCoreSpec: QuickSpec {
                 }
             }
         }
-        
+
         describe("Functionality Test") {
             var validationCore: ValidationCore!
-            let testDataProvider : TestDataProvider! = TestDataProvider()
-            
+            let testDataProvider: TestDataProvider! = TestDataProvider()
+
             it("can verify signature using X509TrustlistService") {
                 let testData = testDataProvider.x509TestData
                 let dateService = TestDateService(testData)
                 let keyId = Data([172, 54, 144, 238, 131, 97, 204, 150])
-                let signatureCerts = [keyId:testData.testContext.signingCertificate!]
+                let signatureCerts = [keyId: testData.testContext.signingCertificate!]
                 let x509TrustService = X509TrustlistService(base64Encoded: signatureCerts, dateService: dateService)
                 validationCore = ValidationCore(trustlistService: x509TrustService, dateService: dateService)
                 validationCore.validate(encodedData: testData.prefixed!) { result in
@@ -55,35 +51,35 @@ class ValidationCoreSpec: QuickSpec {
             }
         }
     }
-    
-    private func map(_ validationResult: ValidationResult, to testData: EuTestData){
+
+    private func map(_ validationResult: ValidationResult, to testData: EuTestData) {
         let expectedResults = testData.expectedResults
-        if true == expectedResults.isSchemeValidatable {
+        if expectedResults.isSchemeValidatable == true {
             expect(validationResult.greenpass).to(beHealthCert(testData.jsonContent))
         }
-        
+
         if let verifiable = expectedResults.isVerifiable {
             expect(validationResult.isValid == verifiable).to(beTrue())
         }
     }
-    
-    private func map(_ error: ValidationError, to expectedResults: ExpectedResults){
-        if false == expectedResults.isUnprefixed {
+
+    private func map(_ error: ValidationError, to expectedResults: ExpectedResults) {
+        if expectedResults.isUnprefixed == false {
             expect(error).to(beError(.INVALID_SCHEME_PREFIX))
         }
-        if false == expectedResults.isBase45Decodable {
+        if expectedResults.isBase45Decodable == false {
             expect(error).to(beError(.BASE_45_DECODING_FAILED))
         }
-        if false == expectedResults.isExpired {
+        if expectedResults.isExpired == false {
             expect(error).to(beError(.CWT_EXPIRED))
         }
-        if false == expectedResults.isVerifiable {
+        if expectedResults.isVerifiable == false {
             expect(error).to(satisfyAnyOf(beError(.COSE_DESERIALIZATION_FAILED), beError(.SIGNATURE_INVALID)))
         }
-        if false == expectedResults.isDecodable {
+        if expectedResults.isDecodable == false {
             expect(error).to(beError(.CBOR_DESERIALIZATION_FAILED))
         }
-        if false == expectedResults.isKeyUsageMatching {
+        if expectedResults.isKeyUsageMatching == false {
             expect(error).to(beError(.UNSUITABLE_PUBLIC_KEY_TYPE))
         }
     }

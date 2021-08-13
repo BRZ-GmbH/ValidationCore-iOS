@@ -1,17 +1,17 @@
 //
 //  TestUtils.swift
-//  
+//
 //
 //  Created by Dominik Mocher on 19.04.21.
 //
 
 import Foundation
-import Quick
 import Nimble
+import Quick
 import ValidationCore
 
 /// Nimble matcher for validation errors
-func beError(_ validationError : ValidationError) -> Predicate<ValidationError> {
+func beError(_ validationError: ValidationError) -> Predicate<ValidationError> {
     return Predicate.define("be \(validationError)") { expression, message in
         if let actual = try expression.evaluate(), case validationError = actual {
             return PredicateResult(status: .matches, message: message)
@@ -20,7 +20,7 @@ func beError(_ validationError : ValidationError) -> Predicate<ValidationError> 
     }
 }
 
-func beHealthCert(_ healthCert : EuHealthCert?) -> Predicate<EuHealthCert?> {
+func beHealthCert(_ healthCert: EuHealthCert?) -> Predicate<EuHealthCert?> {
     return Predicate.define("be \(healthCert)") { expression, message in
         if let actual = try expression.evaluate(), healthCert == actual {
             return PredicateResult(status: .matches, message: message)
@@ -29,7 +29,7 @@ func beHealthCert(_ healthCert : EuHealthCert?) -> Predicate<EuHealthCert?> {
     }
 }
 
-extension EuHealthCert : Equatable {
+extension EuHealthCert: Equatable {
     public static func == (lhs: EuHealthCert, rhs: EuHealthCert) -> Bool {
         return lhs.version == rhs.version &&
             lhs.person == rhs.person &&
@@ -40,7 +40,7 @@ extension EuHealthCert : Equatable {
     }
 }
 
-extension Person : Equatable {
+extension Person: Equatable {
     public static func == (lhs: Person, rhs: Person) -> Bool {
         return lhs.familyName == rhs.familyName &&
             lhs.givenName == rhs.givenName &&
@@ -49,7 +49,7 @@ extension Person : Equatable {
     }
 }
 
-extension Test : Equatable {
+extension Test: Equatable {
     public static func == (lhs: Test, rhs: Test) -> Bool {
         return lhs.certificateIdentifier == rhs.certificateIdentifier &&
             lhs.certificateIssuer == rhs.certificateIssuer &&
@@ -60,12 +60,12 @@ extension Test : Equatable {
             lhs.testCenter == rhs.testCenter &&
             lhs.testName == rhs.testName &&
             lhs.timestampResult == rhs.timestampResult &&
-            lhs.timestampSample ==  rhs.timestampSample &&
+            lhs.timestampSample == rhs.timestampSample &&
             lhs.type == rhs.type
     }
 }
 
-extension Recovery : Equatable {
+extension Recovery: Equatable {
     public static func == (lhs: Recovery, rhs: Recovery) -> Bool {
         return lhs.certificateIdentifier == rhs.certificateIdentifier &&
             lhs.certificateIssuer == rhs.certificateIssuer &&
@@ -77,7 +77,7 @@ extension Recovery : Equatable {
     }
 }
 
-extension Vaccination : Equatable {
+extension Vaccination: Equatable {
     public static func == (lhs: Vaccination, rhs: Vaccination) -> Bool {
         return lhs.certificateIdentifier == rhs.certificateIdentifier &&
             lhs.certificateIssuer == rhs.certificateIssuer &&
@@ -100,6 +100,7 @@ extension Date {
             return self < date
         }
     }
+
     func isAfter(_ date: Date) -> Bool {
         if #available(iOS 13.0, *) {
             return distance(to: date) <= 0

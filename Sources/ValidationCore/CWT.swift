@@ -1,6 +1,6 @@
 //
 //  CWT.swift
-//  
+//
 //
 //  Created by Dominik Mocher on 29.04.21.
 //
@@ -9,26 +9,26 @@ import Foundation
 import SwiftCBOR
 
 public struct CWT {
-    let iss : String?
-    let exp : UInt64?
-    let iat : UInt64?
-    let nbf : UInt64?
-    let sub : Data?
-    public let euHealthCert : EuHealthCert?
-    
-    enum PayloadKeys : Int {
+    let iss: String?
+    let exp: UInt64?
+    let iat: UInt64?
+    let nbf: UInt64?
+    let sub: Data?
+    public let euHealthCert: EuHealthCert?
+
+    enum PayloadKeys: Int {
         case iss = 1
         case sub = 2
         case exp = 4
         case nbf = 5
         case iat = 6
         case hcert = -260
-        
-        enum HcertKeys : Int {
+
+        enum HcertKeys: Int {
             case euHealthCertV1 = 1
         }
     }
-    
+
     init?(from cbor: CBOR) {
         guard let decodedPayload = cbor.decodeBytestring()?.asMap() else {
             return nil
@@ -38,34 +38,27 @@ public struct CWT {
         iat = decodedPayload[PayloadKeys.iat]?.asUInt64() ?? decodedPayload[PayloadKeys.iat]?.asDouble()?.toUInt64()
         nbf = decodedPayload[PayloadKeys.nbf]?.asUInt64() ?? decodedPayload[PayloadKeys.nbf]?.asDouble()?.toUInt64()
         sub = decodedPayload[PayloadKeys.sub]?.asData()
-        
-        var euHealthCert : EuHealthCert? = nil
+
+        var euHealthCert: EuHealthCert?
         if let hCertMap = decodedPayload[PayloadKeys.hcert]?.asMap(),
            let certData = hCertMap[PayloadKeys.HcertKeys.euHealthCertV1]?.asData() {
             euHealthCert = try? CodableCBORDecoder().decode(EuHealthCert.self, from: certData)
         }
         self.euHealthCert = euHealthCert
     }
-    
-    public var issuedAt : Date? {
-        get {
-            return iat?.toDate()
-        }
+
+    public var issuedAt: Date? {
+        return iat?.toDate()
     }
-    
-    public var notBefore : Date? {
-        get {
-            return nbf?.toDate()
-        }
+
+    public var notBefore: Date? {
+        return nbf?.toDate()
     }
-    
-    public var expiresAt : Date? {
-        get {
-            return exp?.toDate()
-        }
+
+    public var expiresAt: Date? {
+        return exp?.toDate()
     }
-    
-    
+
     func isValid(using dateService: DateService) -> Bool {
         guard let expDate = exp?.toDate() else {
             return false
@@ -79,9 +72,9 @@ public struct CWT {
         }
         return isValid
     }
-    
+
     func isAlreadyValid(using dateService: DateService) -> Bool {
-        guard nil != iat || nil != nbf else {
+        guard iat != nil || nbf != nil else {
             return false
         }
         var isValid = true
@@ -93,7 +86,7 @@ public struct CWT {
         }
         return isValid
     }
-    
+
     func isNotExpired(using dateService: DateService) -> Bool {
         guard let expDate = exp?.toDate() else {
             return false

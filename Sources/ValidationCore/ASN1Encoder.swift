@@ -8,7 +8,6 @@
 import Foundation
 
 public class Asn1Encoder {
-
     public init() {}
 
     // 32 for ES256
@@ -25,13 +24,12 @@ public class Asn1Encoder {
     private func encodeIntegerToAsn1(_ data: Data) -> Data {
         let firstBitIsSet: UInt8 = 0x80 // would be decoded as a negative number
         let tagInteger: UInt8 = 0x02
-        if (data.first! >= firstBitIsSet) {
+        if data.first! >= firstBitIsSet {
             return Data([tagInteger] + [UInt8(data.count + 1)] + [0x00] + data)
-        } else if (data.first! == 0x00) {
+        } else if data.first! == 0x00 {
             return encodeIntegerToAsn1(data.dropFirst())
         } else {
             return Data([tagInteger] + [UInt8(data.count)] + data)
         }
     }
-
 }

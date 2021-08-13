@@ -1,36 +1,36 @@
 //
 //  ValidationError.swift
-//  
+//
 //
 //  Created by Dominik Mocher on 07.04.21.
 //
 
 import Foundation
 
-public enum ValidationError : String, Error, Codable {
-    case GENERAL_ERROR = "GENERAL_ERROR"
-    case INVALID_SCHEME_PREFIX = "INVALID_SCHEME_PREFIX"
-    case DECOMPRESSION_FAILED = "DECOMPRESSION_FAILED"
-    case BASE_45_DECODING_FAILED = "BASE_45_DECODING_FAILED"
-    case COSE_DESERIALIZATION_FAILED = "COSE_DESERIALIZATION_FAILED"
-    case CBOR_DESERIALIZATION_FAILED = "CBOR_DESERIALIZATION_FAILED"
-    case CWT_EXPIRED = "CWT_EXPIRED"
-    case QR_CODE_ERROR = "QR_CODE_ERROR"
-    case CERTIFICATE_QUERY_FAILED = "CERTIFICATE_QUERY_FAILED"
-    case USER_CANCELLED = "USER_CANCELLED"
-    case TRUST_SERVICE_ERROR = "TRUST_SERVICE_ERROR"
-    case KEY_NOT_IN_TRUST_LIST = "KEY_NOT_IN_TRUST_LIST"
-    case PUBLIC_KEY_EXPIRED = "PUBLIC_KEY_EXPIRED"
-    case UNSUITABLE_PUBLIC_KEY_TYPE = "UNSUITABLE_PUBLIC_KEY_TYPE"
-    case KEY_CREATION_ERROR = "KEY_CREATION_ERROR"
-    case KEYSTORE_ERROR = "KEYSTORE_ERROR"
-    case SIGNATURE_INVALID = "SIGNATURE_INVALID"
-    case TRUST_LIST_SIGNATURE_INVALID = "TRUST_LIST_SIGNATURE_INVALID"
-    case TRUST_LIST_NOT_YET_VALID = "TRUST_LIST_NOT_YET_VALID"
-    case TRUST_LIST_EXPIRED = "TRUST_LIST_EXPIRED"
-    
+public enum ValidationError: String, Error, Codable {
+    case GENERAL_ERROR
+    case INVALID_SCHEME_PREFIX
+    case DECOMPRESSION_FAILED
+    case BASE_45_DECODING_FAILED
+    case COSE_DESERIALIZATION_FAILED
+    case CBOR_DESERIALIZATION_FAILED
+    case CWT_EXPIRED
+    case QR_CODE_ERROR
+    case CERTIFICATE_QUERY_FAILED
+    case USER_CANCELLED
+    case TRUST_SERVICE_ERROR
+    case KEY_NOT_IN_TRUST_LIST
+    case PUBLIC_KEY_EXPIRED
+    case UNSUITABLE_PUBLIC_KEY_TYPE
+    case KEY_CREATION_ERROR
+    case KEYSTORE_ERROR
+    case SIGNATURE_INVALID
+    case TRUST_LIST_SIGNATURE_INVALID
+    case TRUST_LIST_NOT_YET_VALID
+    case TRUST_LIST_EXPIRED
+    case DATA_EXPIRED
 
-    public var message : String {
+    public var message: String {
         switch self {
         case .GENERAL_ERROR: return "General error"
         case .INVALID_SCHEME_PREFIX: return "Invalid scheme prefix"
@@ -52,6 +52,7 @@ public enum ValidationError : String, Error, Codable {
         case .TRUST_LIST_SIGNATURE_INVALID: return "Trustlist signature is not valid"
         case .TRUST_LIST_NOT_YET_VALID: return "Trustlist is not yet valid"
         case .TRUST_LIST_EXPIRED: return "Trustlist is expired"
+        case .DATA_EXPIRED: return "Data is expired"
         }
     }
 }

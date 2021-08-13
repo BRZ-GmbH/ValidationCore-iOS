@@ -1,6 +1,6 @@
 //
 //  CBORExtensions.swift
-//  
+//
 //
 //  Created by Dominik Mocher on 14.04.21.
 //
@@ -11,85 +11,83 @@ import SwiftCBOR
 extension CBOR {
     func unwrap() -> Any? {
         switch self {
-        case .simple(let value): return value
-        case .boolean(let value): return value
-        case .byteString(let value): return value
-        case .date(let value): return value
-        case .double(let value): return value
-        case .float(let value): return value
-        case .half(let value): return value
-        case .tagged(let tag, let cbor): return (tag, cbor)
-        case .array(let array): return array
-        case .map(let map): return map
-        case .utf8String(let value): return value
-        case .negativeInt(let value): return value
-        case .unsignedInt(let value): return value
+        case let .simple(value): return value
+        case let .boolean(value): return value
+        case let .byteString(value): return value
+        case let .date(value): return value
+        case let .double(value): return value
+        case let .float(value): return value
+        case let .half(value): return value
+        case let .tagged(tag, cbor): return (tag, cbor)
+        case let .array(array): return array
+        case let .map(map): return map
+        case let .utf8String(value): return value
+        case let .negativeInt(value): return value
+        case let .unsignedInt(value): return value
         default:
             return nil
         }
     }
-    
+
     func asUInt64() -> UInt64? {
-        return self.unwrap() as? UInt64
+        return unwrap() as? UInt64
     }
-    
+
     func asDouble() -> Double? {
-        return self.unwrap() as? Double
+        return unwrap() as? Double
     }
-    
+
     func asInt64() -> Int64? {
-        return self.unwrap() as? Int64
+        return unwrap() as? Int64
     }
-    
+
     func asString() -> String? {
-        return self.unwrap() as? String
+        return unwrap() as? String
     }
-    
+
     func asList() -> [CBOR]? {
-        return self.unwrap() as? [CBOR]
+        return unwrap() as? [CBOR]
     }
-    
-    func asMap() -> [CBOR:CBOR]? {
-        return self.unwrap() as? [CBOR:CBOR]
+
+    func asMap() -> [CBOR: CBOR]? {
+        return unwrap() as? [CBOR: CBOR]
     }
-    
+
     func asBytes() -> [UInt8]? {
-        return self.unwrap() as? [UInt8]
+        return unwrap() as? [UInt8]
     }
-    
+
     func asData() -> Data {
-        return Data(self.encode())
+        return Data(encode())
     }
-     
+
     func asCose() -> (CBOR.Tag, [CBOR])? {
-        guard let rawCose =  self.unwrap() as? (CBOR.Tag, CBOR),
+        guard let rawCose = unwrap() as? (CBOR.Tag, CBOR),
               let cosePayload = rawCose.1.asList() else {
             return nil
         }
         return (rawCose.0, cosePayload)
     }
-    
+
     func decodeBytestring() -> CBOR? {
-        guard let bytestring = self.asBytes(),
+        guard let bytestring = asBytes(),
               let decoded = try? CBORDecoder(input: bytestring).decodeItem() else {
             return nil
         }
         return decoded
     }
-    
 }
 
-extension CBOR.Tag {
-    public static let coseSign1Item = CBOR.Tag(rawValue: 18)
-    public static let coseSignItem = CBOR.Tag(rawValue: 98)
+public extension CBOR.Tag {
+    static let coseSign1Item = CBOR.Tag(rawValue: 18)
+    static let coseSignItem = CBOR.Tag(rawValue: 98)
 }
-
 
 extension Dictionary where Key == CBOR {
     subscript<Index: RawRepresentable>(index: Index) -> Value? where Index.RawValue == String {
         return self[CBOR(stringLiteral: index.rawValue)]
     }
-    
+
     subscript<Index: RawRepresentable>(index: Index) -> Value? where Index.RawValue == Int {
         return self[CBOR(integerLiteral: index.rawValue)]
     }
@@ -100,10 +98,10 @@ enum CborType: UInt8 {
     case list = 132
     case cwt = 216
     case unknown
-    
+
     static func from(data: Data) -> CborType {
         switch data.bytes[0] {
-        case self.tag.rawValue: return tag
+        case tag.rawValue: return tag
         case list.rawValue: return list
         case cwt.rawValue: return cwt
         default: return unknown
