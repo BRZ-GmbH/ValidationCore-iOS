@@ -51,7 +51,7 @@ public class X509TrustlistService: TrustlistService {
         key(for: keyId, keyType: keyType, completionHandler: completionHandler)
     }
 
-    public func updateDataIfNecessary(force _: Bool, completionHandler _: @escaping (ValidationError?) -> Void) {
+    public func updateDataIfNecessary(force _: Bool, completionHandler _: @escaping (Bool, ValidationError?) -> Void) {
         /* not used */
     }
 

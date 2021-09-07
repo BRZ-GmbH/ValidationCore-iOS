@@ -10,7 +10,7 @@ import Foundation
 
 public protocol BusinessRulesService {
     func businessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void)
-    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (ValidationError?) -> Void)
+    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
 }
 
@@ -49,7 +49,7 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
     }
 
     func businessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
-        updateDataIfNecessary { [weak self] _ in
+        updateDataIfNecessary { [weak self] _, _ in
             self?.cachedBusinessRules(completionHandler: completionHandler)
         }
     }

@@ -10,7 +10,7 @@ import Foundation
 public protocol TrustlistService {
     func key(for keyId: Data, keyType: CertType, completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void)
     func key(for keyId: Data, cwt: CWT, keyType: CertType, completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void)
-    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (ValidationError?) -> Void)
+    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
 }
 
@@ -43,7 +43,7 @@ class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
     }
 
     private func key(for keyId: Data, keyType: CertType, cwt: CWT?, completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
-        updateDataIfNecessary { _ in
+        updateDataIfNecessary { _, _ in
             self.cachedKey(from: keyId, for: keyType, cwt: cwt, completionHandler)
         }
     }

@@ -10,7 +10,7 @@ import Foundation
 
 public protocol ValueSetsService {
     func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
-    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (ValidationError?) -> Void)
+    func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
 }
 
@@ -51,7 +51,7 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
     }
 
     func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void) {
-        updateDataIfNecessary { [weak self] _ in
+        updateDataIfNecessary { [weak self] _, _ in
             guard let self = self else { return }
 
             if self.dataIsExpired() {

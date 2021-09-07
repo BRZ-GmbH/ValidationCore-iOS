@@ -173,10 +173,11 @@ public struct ValidationCore {
                             completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil)
                             return
                         }
-
+                        
+                        let filteredRules = rules.filter({ $0.countryCode == countryCode && $0.region == region })
                         let certLogicValueSets = valueSets.mapValues { $0.valueSetValues.map { $0.key } }
 
-                        let engine = CertLogicEngine(schema: euDgcSchemaV1, rules: rules)
+                        let engine = CertLogicEngine(schema: euDgcSchemaV1, rules: filteredRules)
                         let filter = FilterParameter(validationClock: validationClock, countryCode: countryCode, certificationType: certificate.certificationType, region: region)
                         let certificatePayload = try! JSONEncoder().encode(certificate)
                         let payloadString = String(data: certificatePayload, encoding: .utf8)!
@@ -199,11 +200,11 @@ public struct ValidationCore {
         }
     }
 
-    public func updateTrustlistAndRules(force: Bool, completionHandler: @escaping (ValidationError?) -> Void) {
-        trustlistService.updateDataIfNecessary(force: force) { trustlistError in
-            businessRulesService.updateDataIfNecessary(force: force) { businessRulesError in
-                valueSetsService.updateDataIfNecessary(force: force) { valueSetsError in
-                    completionHandler(trustlistError ?? businessRulesError ?? valueSetsError)
+    public func updateTrustlistAndRules(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void) {
+        trustlistService.updateDataIfNecessary(force: force) { updatedTrustlist, trustlistError in
+            businessRulesService.updateDataIfNecessary(force: force) { updatedBusinessRules, businessRulesError in
+                valueSetsService.updateDataIfNecessary(force: force) { updatedValuesets, valueSetsError in
+                    completionHandler(updatedTrustlist || updatedBusinessRules || updatedValuesets, trustlistError ?? businessRulesError ?? valueSetsError)
                 }
             }
         }

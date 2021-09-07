@@ -74,7 +74,7 @@ class SignedDataService<T: SignedData> {
         if cachedData.isEmpty {
             lastUpdate = Date(timeIntervalSince1970: 0)
         }
-        updateSignatureAndDataIfNecessary { _ in }
+        updateSignatureAndDataIfNecessary { _, _ in }
         removeLegacyKeychainData()
     }
 
@@ -82,23 +82,23 @@ class SignedDataService<T: SignedData> {
         self.dateService = dateService
     }
 
-    public func updateDataIfNecessary(force: Bool = false, completionHandler: @escaping (ValidationError?) -> Void) {
+    public func updateDataIfNecessary(force: Bool = false, completionHandler: @escaping (Bool, ValidationError?) -> Void) {
         if dateService.isNowBefore(lastUpdate.addingTimeInterval(updateInterval)) && !cachedData.isEmpty && !force {
             DDLogDebug("Skipping data update...")
-            completionHandler(nil)
+            completionHandler(false, nil)
             return
         }
 
-        updateSignatureAndDataIfNecessary { error in
+        updateSignatureAndDataIfNecessary { updated, error in
             if let error = error {
                 DDLogError("Cannot refresh data: \(error)")
             }
 
-            completionHandler(error)
+            completionHandler(updated, error)
         }
     }
 
-    private func updateSignatureAndDataIfNecessary(completionHandler: @escaping (ValidationError?) -> Void) {
+    private func updateSignatureAndDataIfNecessary(completionHandler: @escaping (Bool, ValidationError?) -> Void) {
         updateDetachedSignature { result in
             switch result {
             case let .success(hash):
@@ -108,32 +108,33 @@ class SignedDataService<T: SignedData> {
                 } else {
                     self.lastUpdate = self.dateService.now
                 }
-                completionHandler(nil)
+                completionHandler(false, nil)
             case let .failure(error):
-                completionHandler(error)
+                completionHandler(false, error)
             }
         }
     }
 
-    private func updateData(for hash: Data, _ completionHandler: @escaping (ValidationError?) -> Void) {
+    private func updateData(for hash: Data, _ completionHandler: @escaping (Bool, ValidationError?) -> Void) {
         guard let request = defaultRequest(to: dataUrl) else {
-            completionHandler(.TRUST_SERVICE_ERROR)
+            completionHandler(true, .TRUST_SERVICE_ERROR)
             return
         }
 
         URLSession.shared.dataTask(with: request) { body, response, error in
             guard self.isResponseValid(response, error), let body = body else {
                 DDLogError("Cannot query signed data service")
-                completionHandler(.TRUST_SERVICE_ERROR)
+                completionHandler(true, .TRUST_SERVICE_ERROR)
                 return
             }
             guard self.refreshData(from: body, for: hash) else {
-                self.lastUpdate = self.dateService.now
-
-                completionHandler(.TRUST_SERVICE_ERROR)
+                completionHandler(true, .TRUST_SERVICE_ERROR)
                 return
             }
-            completionHandler(nil)
+
+            self.lastUpdate = self.dateService.now
+
+            completionHandler(true, nil)
         }.resume()
     }
 
@@ -272,15 +273,31 @@ extension SignedDataService {
     // MARK: iOS 12 support for missing CryptoKit
 
     func removeLegacyKeychainData() {
+        if #available(iOS 13.0, *) {
+            removeLegacyKeychainDataEntries()
+        }
+    }
+
+    private func removeLegacyKeychainDataEntries() {
         let query = [kSecClass: kSecClassGenericPassword,
-                     kSecAttrLabel: legacyKeychainAlias] as [String: Any]
-        SecItemDelete(query as CFDictionary)
+                     kSecAttrLabel: legacyKeychainAlias,
+                     kSecAttrAccount: legacyKeychainAlias,
+                     kSecAttrService: legacyKeychainAlias] as [String: Any]
+        let status = SecItemDelete(query as CFDictionary)
+
+        if status != errSecSuccess {
+            let query = [kSecClass: kSecClassGenericPassword,
+                         kSecAttrLabel: legacyKeychainAlias] as [String: Any]
+            SecItemDelete(query as CFDictionary)
+        }
     }
 
     private func storeLegacyData(encodedData: Data) {
+        removeLegacyKeychainDataEntries()
+
         guard let accessFlags = SecAccessControlCreateWithFlags(
             kCFAllocatorDefault,
-            kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
+            kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
             [],
             nil
         ) else {
@@ -289,7 +306,8 @@ extension SignedDataService {
         }
         let updateQuery = [kSecClass: kSecClassGenericPassword,
                            kSecAttrLabel: legacyKeychainAlias,
-                           kSecAttrAccessControl: accessFlags] as [String: Any]
+                           kSecAttrService: legacyKeychainAlias,
+                           kSecAttrAccount: legacyKeychainAlias] as [String: Any]
 
         let updateAttributes = [kSecValueData: encodedData] as [String: Any]
 
@@ -297,6 +315,8 @@ extension SignedDataService {
         if status == errSecItemNotFound {
             let addQuery = [kSecClass: kSecClassGenericPassword,
                             kSecAttrLabel: legacyKeychainAlias,
+                            kSecAttrService: legacyKeychainAlias,
+                            kSecAttrAccount: legacyKeychainAlias,
                             kSecAttrAccessControl: accessFlags,
                             kSecValueData: encodedData] as [String: Any]
             let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
@@ -311,6 +331,8 @@ extension SignedDataService {
     private func loadCachedLegacyData() {
         let query = [kSecClass: kSecClassGenericPassword,
                      kSecAttrLabel: legacyKeychainAlias,
+                     kSecAttrService: legacyKeychainAlias,
+                     kSecAttrAccount: legacyKeychainAlias,
                      kSecReturnData: true] as [String: Any]
 
         var item: CFTypeRef?
@@ -319,7 +341,23 @@ extension SignedDataService {
             if let plaintext = item as? Data {
                 if let data = try? JSONDecoder().decode(T.self, from: plaintext) {
                     cachedData = data
+                    return
                 }
+            }
+        case errSecItemNotFound:
+            let query = [kSecClass: kSecClassGenericPassword,
+                         kSecAttrLabel: legacyKeychainAlias,
+                         kSecReturnData: true] as [String: Any]
+
+            var item: CFTypeRef?
+            switch SecItemCopyMatching(query as CFDictionary, &item) {
+            case errSecSuccess:
+                if let plaintext = item as? Data {
+                    if let data = try? JSONDecoder().decode(T.self, from: plaintext) {
+                        cachedData = data
+                    }
+                }
+            default: DDLogError(ValidationError.KEYSTORE_ERROR)
             }
 
         default: DDLogError(ValidationError.KEYSTORE_ERROR)

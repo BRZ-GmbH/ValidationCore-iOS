@@ -78,7 +78,7 @@ public enum CryptoService {
     private static func storeKey<T: GenericPasswordConvertible>(_ key: T, alias: String, context _: LAContext) throws {
         guard let accessFlags = SecAccessControlCreateWithFlags(
             kCFAllocatorDefault,
-            kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
+            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
             [],
             nil
         ) else {
