@@ -1,5 +1,8 @@
 # Grüner Pass (ValidationCore-iOS) - Release Notes
 
+## v.2.0.3 (09.2021)
+- Fehlerbehebung (EPIEMSCO-1670)
+
 ## v.2.0.2 (08.2021)
 
 - EPIEMSCO-1506: Pass information in completion handler if signed data was updated

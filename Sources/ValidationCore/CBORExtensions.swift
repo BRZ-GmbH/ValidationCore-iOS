@@ -56,9 +56,9 @@ extension CBOR {
     func asBytes() -> [UInt8]? {
         return unwrap() as? [UInt8]
     }
-
-    func asData() -> Data {
-        return Data(encode())
+    
+    public func asData() -> Data {
+        return Data(self.encode())
     }
 
     func asCose() -> (CBOR.Tag, [CBOR])? {

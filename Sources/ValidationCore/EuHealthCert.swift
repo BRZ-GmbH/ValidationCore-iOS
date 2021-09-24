@@ -103,16 +103,24 @@ public struct Vaccination: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
-        vaccine = try container.decode(String.self, forKey: .vaccine).trimmingCharacters(in: .whitespacesAndNewlines)
-        medicinialProduct = try container.decode(String.self, forKey: .medicinialProduct).trimmingCharacters(in: .whitespacesAndNewlines)
-        marketingAuthorizationHolder = try container.decode(String.self, forKey: .marketingAuthorizationHolder).trimmingCharacters(in: .whitespacesAndNewlines)
-        doseNumber = try container.decode(UInt64.self, forKey: .doseNumber)
-        guard 1 ..< 10 ~= doseNumber else {
+        self.disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.vaccine = try container.decode(String.self, forKey: .vaccine).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.medicinialProduct = try container.decode(String.self, forKey: .medicinialProduct).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.marketingAuthorizationHolder = try container.decode(String.self, forKey: .marketingAuthorizationHolder).trimmingCharacters(in: .whitespacesAndNewlines)
+        if let doseNumber = try? container.decode(Double.self, forKey: .doseNumber) {
+            self.doseNumber = UInt64(doseNumber)
+        } else {
+            self.doseNumber = try container.decode(UInt64.self, forKey: .doseNumber)
+        }
+        guard 1..<10 ~= self.doseNumber else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
-        totalDoses = try container.decode(UInt64.self, forKey: .totalDoses)
-        guard 1 ..< 10 ~= totalDoses else {
+        if let totalDoses = try? container.decode(Double.self, forKey: .totalDoses) {
+            self.totalDoses = UInt64(totalDoses)
+        } else {
+            self.totalDoses = try container.decode(UInt64.self, forKey: .totalDoses)
+        }
+        guard 1..<10 ~= totalDoses else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
         vaccinationDate = try container.decode(String.self, forKey: .vaccinationDate)
@@ -162,15 +170,12 @@ public struct Test: Codable {
         guard timestampSample.isValidIso8601DateTime() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
-        timestampResult = try? container.decode(String.self, forKey: .timestampResult)
-        if let timestampResult = timestampResult, !timestampResult.isValidIso8601DateTime() {
-            throw ValidationError.CBOR_DESERIALIZATION_FAILED
-        }
-        result = try container.decode(String.self, forKey: .result).trimmingCharacters(in: .whitespacesAndNewlines)
-        testCenter = try? container.decode(String.self, forKey: .testCenter)
-        country = try container.decode(String.self, forKey: .country).trimmingCharacters(in: .whitespacesAndNewlines)
-        certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
-        certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
+        self.timestampResult = try? container.decode(String.self, forKey: .timestampResult)
+        self.result = try container.decode(String.self, forKey: .result).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.testCenter = try? container.decode(String.self, forKey: .testCenter)
+        self.country = try container.decode(String.self, forKey: .country).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
+        self.certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
     }
 }
 

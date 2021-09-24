@@ -51,6 +51,7 @@ struct Cose {
         switch cborType {
         case .tag:
             guard let cose = try? CBOR.decode(data.bytes)?.asCose(),
+                  cose.1.count == 4,
                   let protectedHeader = CoseHeader(fromBytestring: cose.1[0]),
                   let signature = cose.1[3].asBytes(),
                   let type = CoseType.from(data: data) else {
@@ -64,6 +65,7 @@ struct Cose {
         case .list:
             guard let coseData = try? CBOR.decode(data.bytes),
                   let coseList = coseData.asList(),
+                  coseList.count == 4,
                   let protectedHeader = CoseHeader(fromBytestring: coseList[0]),
                   let signature = coseList[3].asBytes() else {
                 return nil
@@ -78,6 +80,7 @@ struct Cose {
                   let cwtCose = rawCose.unwrap() as? (CBOR.Tag, CBOR),
                   let coseData = cwtCose.1.unwrap() as? (CBOR.Tag, CBOR),
                   let coseList = coseData.1.asList(),
+                  coseList.count == 4,
                   let protectedHeader = CoseHeader(fromBytestring: coseList[0]),
                   let signature = coseList[3].asBytes() else {
                 return nil
@@ -137,11 +140,11 @@ struct Cose {
     // MARK: - Nested Types
 
     struct CoseHeader {
-        fileprivate let rawHeader: CBOR?
-        let keyId: [UInt8]?
-        let algorithm: Algorithm?
+        fileprivate let rawHeader : CBOR?
+        let keyId : [UInt8]?
+        let algorithm : Algorithm?
 
-        enum Headers: Int {
+        enum Headers : Int {
             case keyId = 4
             case algorithm = 1
         }
