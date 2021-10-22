@@ -7,6 +7,7 @@
 
 import CertLogic
 import Foundation
+import SwiftyJSON
 
 public extension EuHealthCert {
     var certificationType: CertificateType {
@@ -350,3 +351,5 @@ let euDgcSchemaV1 = """
   }
 }
 """
+
+let parsedEuDgcSchemaV1 = JSON(parseJSON: euDgcSchemaV1)

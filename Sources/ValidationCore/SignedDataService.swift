@@ -44,6 +44,9 @@ class SignedDataService<T: SignedData> {
     private let keyAlias: String
     private let legacyKeychainAlias: String
     private let lastUpdateKey: String
+    
+    private var isUpdating: Bool = false
+    private var completionHandlers: [(Bool, ValidationError?) -> Void] = []
 
     init(dateService: DateService,
          dataUrl: String,
@@ -74,7 +77,6 @@ class SignedDataService<T: SignedData> {
         if cachedData.isEmpty {
             lastUpdate = Date(timeIntervalSince1970: 0)
         }
-        updateSignatureAndDataIfNecessary { _, _ in }
         removeLegacyKeychainData()
     }
 
@@ -89,16 +91,30 @@ class SignedDataService<T: SignedData> {
             return
         }
 
-        updateSignatureAndDataIfNecessary { updated, error in
+        completionHandlers.append(completionHandler)
+        
+        updateSignatureAndDataIfNecessary { [weak self] updated, error in
             if let error = error {
                 DDLogError("Cannot refresh data: \(error)")
             }
+            
+            self?.isUpdating = false
 
-            completionHandler(updated, error)
+            self?.completionHandlers.forEach({
+                $0(updated, error)
+            })
+
+            self?.completionHandlers.removeAll()
         }
     }
 
     private func updateSignatureAndDataIfNecessary(completionHandler: @escaping (Bool, ValidationError?) -> Void) {
+        if isUpdating {
+            return
+        }
+        
+        isUpdating = true
+
         updateDetachedSignature { result in
             switch result {
             case let .success(hash):

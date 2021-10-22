@@ -177,7 +177,7 @@ public struct ValidationCore {
                         let filteredRules = rules.filter({ $0.countryCode == countryCode && $0.region == region })
                         let certLogicValueSets = valueSets.mapValues { $0.valueSetValues.map { $0.key } }
 
-                        let engine = CertLogicEngine(schema: euDgcSchemaV1, rules: filteredRules)
+                        let engine = CertLogicEngine(schema: parsedEuDgcSchemaV1, rules: filteredRules)
                         let filter = FilterParameter(validationClock: validationClock, countryCode: countryCode, certificationType: certificate.certificationType, region: region)
                         let certificatePayload = try! JSONEncoder().encode(certificate)
                         let payloadString = String(data: certificatePayload, encoding: .utf8)!
