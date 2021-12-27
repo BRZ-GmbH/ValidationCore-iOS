@@ -7,6 +7,8 @@ import Gzip
     import Foundation
 #endif
 import CertLogic
+import JSON
+import jsonlogic
 
 /// Electronic Health Certificate Validation Core
 ///
@@ -159,7 +161,7 @@ public struct ValidationCore {
         }
     }
 
-    public func validateBusinessRules(forCertificate certificate: EuHealthCert, validationClock: Date, issuedAt: Date, expiresAt: Date, countryCode: String, region: String? = nil, completionHandler: @escaping ([CertLogic.ValidationResult], ValidationError?) -> Void) {
+    public func validateBusinessRules(forCertificate certificate: EuHealthCert, validationClock: Date, issuedAt: Date, expiresAt: Date, countryCode: String, region: String? = nil, completionHandler: @escaping ([CertLogic.ValidationResult], Date?, ValidationError?) -> Void) {
         businessRulesService.updateDateService(ValidationClockDateService(now: validationClock))
         valueSetsService.updateDateService(ValidationClockDateService(now: validationClock))
 
@@ -170,7 +172,7 @@ public struct ValidationCore {
                     switch valueSetResult {
                     case let .success(valueSets):
                         if rules.isEmpty || valueSets.isEmpty {
-                            completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil)
+                            completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil, nil)
                             return
                         }
                         
@@ -182,22 +184,54 @@ public struct ValidationCore {
                         let certificatePayload = try! JSONEncoder().encode(certificate)
                         let payloadString = String(data: certificatePayload, encoding: .utf8)!
 
-                        let result = engine.validate(filter: filter, external: ExternalParameter(validationClock: validationClock, valueSets: certLogicValueSets, exp: expiresAt, iat: issuedAt, issuerCountryCode: countryCode), payload: payloadString)
-
+                        let external = ExternalParameter(validationClock: validationClock, valueSets: certLogicValueSets, exp: expiresAt, iat: issuedAt, issuerCountryCode: countryCode)
+                        let result = engine.validate(filter: filter, external: external, payload: payloadString)
+                        
+                        var validUntilDate: Date? = nil
+                        
+                        if result.filter({ $0.result == .fail }).isEmpty {
+                            let metadataRules = rules.filter({
+                                $0.countryCode == countryCode
+                                && $0.region == "\(region ?? "")-MD"
+                                && ($0.certificateFullType == .general || $0.certificateFullType == certificate.certificationType)
+                                && validationClock >= $0.validFromDate && validationClock <= $0.validToDate                                
+                            })
+                            let validationJSON = getJSONStringForValidation(external: external, payload: payloadString)
+                            let jsonObjectForValidation = JSON(string: validationJSON)
+                            
+                            for metadataRule in metadataRules {
+                                do {
+                                    validUntilDate = try JsonLogic(metadataRule.logic.description).applyRuleInternal(to: jsonObjectForValidation)
+                                    if validUntilDate != nil {
+                                        break
+                                    }
+                                } catch {
+                                }
+                            }
+                        }
+                        
                         if result.count == 0 {
-                            completionHandler([CertLogic.ValidationResult(rule: nil, result: .passed, validationErrors: nil)], nil)
+                            completionHandler([CertLogic.ValidationResult(rule: nil, result: .passed, validationErrors: nil)], validUntilDate, nil)
                         } else {
-                            completionHandler(result, nil)
+                            completionHandler(result, validUntilDate, nil)
                         }
                     case let .failure(error):
-                        completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], error)
+                        completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil, error)
                     }
                 }
             case let .failure(error):
-
-                completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], error)
+                completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil, error)
             }
         }
+    }
+    
+    private func getJSONStringForValidation(external: ExternalParameter, payload: String) -> String {
+      guard let jsonData = try? defaultEncoder.encode(external) else { return ""}
+      let externalJsonString = String(data: jsonData, encoding: .utf8)!
+      
+      var result = ""
+      result = "{" + "\"external\":" + "\(externalJsonString)" + "," + "\"payload\":" + "\(payload)"  + "}"
+      return result
     }
 
     public func updateTrustlistAndRules(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void) {

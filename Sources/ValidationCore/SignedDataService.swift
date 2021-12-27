@@ -93,7 +93,7 @@ class SignedDataService<T: SignedData> {
 
         completionHandlers.append(completionHandler)
         
-        updateSignatureAndDataIfNecessary { [weak self] updated, error in
+        updateSignatureAndDataIfNecessary(force: force) { [weak self] updated, error in
             if let error = error {
                 DDLogError("Cannot refresh data: \(error)")
             }
@@ -108,7 +108,7 @@ class SignedDataService<T: SignedData> {
         }
     }
 
-    private func updateSignatureAndDataIfNecessary(completionHandler: @escaping (Bool, ValidationError?) -> Void) {
+    private func updateSignatureAndDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void) {
         if isUpdating {
             return
         }
@@ -118,7 +118,7 @@ class SignedDataService<T: SignedData> {
         updateDetachedSignature { result in
             switch result {
             case let .success(hash):
-                if hash != self.cachedData.hash {
+                if hash != self.cachedData.hash || force {
                     self.updateData(for: hash, completionHandler)
                     return
                 } else {
