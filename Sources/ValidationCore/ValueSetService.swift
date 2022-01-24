@@ -9,6 +9,7 @@ import CertLogic
 import Foundation
 
 public protocol ValueSetsService {
+    func currentValueSets() -> [String: ValueSet]
     func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
     func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
@@ -61,5 +62,9 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
 
             completionHandler(.success(self.mappedValueSets()))
         }
+    }
+    
+    func currentValueSets() -> [String: ValueSet] {
+        return self.mappedValueSets()
     }
 }

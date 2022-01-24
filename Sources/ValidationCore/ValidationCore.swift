@@ -74,14 +74,14 @@ public struct ValidationCore {
                 valueSetsUrl: String? = nil,
                 valueSetsSignatureUrl: String? = nil,
                 valueSetsTrustAnchor: String? = nil,
-                apiToken _: String? = nil) {
+                apiToken: String? = nil) {
         let dateService = dateService ?? DefaultDateService()
         self.dateService = dateService
-        self.trustlistService = trustlistService ?? DefaultTrustlistService(dateService: dateService, trustlistUrl: trustlistUrl ?? ValidationCore.DEFAULT_TRUSTLIST_URL, signatureUrl: signatureUrl ?? ValidationCore.DEFAULT_TRUSTLIST_SIGNATURE_URL, trustAnchor: trustAnchor ?? ValidationCore.DEFAULT_TRUSTLIST_TRUSTANCHOR)
+        self.trustlistService = trustlistService ?? DefaultTrustlistService(dateService: dateService, trustlistUrl: trustlistUrl ?? ValidationCore.DEFAULT_TRUSTLIST_URL, signatureUrl: signatureUrl ?? ValidationCore.DEFAULT_TRUSTLIST_SIGNATURE_URL, trustAnchor: trustAnchor ?? ValidationCore.DEFAULT_TRUSTLIST_TRUSTANCHOR, apiToken: apiToken)
 
-        self.businessRulesService = businessRulesService ?? DefaultBusinessRulesService(dateService: dateService, businessRulesUrl: businessRulesUrl ?? ValidationCore.DEFAULT_BUSINESSRULES_URL, signatureUrl: businessRulesSignatureUrl ?? ValidationCore.DEFAULT_BUSINESSRULES_SIGNATURE_URL, trustAnchor: businessRulesTrustAnchor ?? ValidationCore.DEFAULT_BUSINESSRULES_TRUSTANCHOR)
+        self.businessRulesService = businessRulesService ?? DefaultBusinessRulesService(dateService: dateService, businessRulesUrl: businessRulesUrl ?? ValidationCore.DEFAULT_BUSINESSRULES_URL, signatureUrl: businessRulesSignatureUrl ?? ValidationCore.DEFAULT_BUSINESSRULES_SIGNATURE_URL, trustAnchor: businessRulesTrustAnchor ?? ValidationCore.DEFAULT_BUSINESSRULES_TRUSTANCHOR, apiToken: apiToken)
 
-        self.valueSetsService = valueSetsService ?? DefaultValueSetsService(dateService: dateService, valueSetsUrl: valueSetsUrl ?? ValidationCore.DEFAULT_VALUE_SETS_URL, signatureUrl: valueSetsSignatureUrl ?? ValidationCore.DEFAULT_VALUE_SETS_SIGNATURE_URL, trustAnchor: valueSetsTrustAnchor ?? ValidationCore.DEFAULT_VALUE_SETS_TRUSTANCHOR)
+        self.valueSetsService = valueSetsService ?? DefaultValueSetsService(dateService: dateService, valueSetsUrl: valueSetsUrl ?? ValidationCore.DEFAULT_VALUE_SETS_URL, signatureUrl: valueSetsSignatureUrl ?? ValidationCore.DEFAULT_VALUE_SETS_SIGNATURE_URL, trustAnchor: valueSetsTrustAnchor ?? ValidationCore.DEFAULT_VALUE_SETS_TRUSTANCHOR, apiToken: apiToken)
 
         DDLog.add(DDOSLogger.sharedInstance)
     }
@@ -223,6 +223,10 @@ public struct ValidationCore {
                 completionHandler([CertLogic.ValidationResult(rule: nil, result: .fail, validationErrors: nil)], nil, error)
             }
         }
+    }
+    
+    public func getCurrentValueSets() -> [String:ValueSet] {
+        return valueSetsService.currentValueSets()
     }
     
     private func getJSONStringForValidation(external: ExternalParameter, payload: String) -> String {

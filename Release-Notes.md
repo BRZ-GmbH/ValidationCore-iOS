@@ -1,5 +1,9 @@
 # Grüner Pass (ValidationCore-iOS) - Release Notes
 
+## v2.3.0
+
+- Anpassungen für Zugriff auf Regeldaten (EPIEMSCO-2092)
+
 ## v.2.2.0
 
 - Auswertung von Metadata-Business Rules zur Anzeige des Gültigkeitsdatums von Zertifikaten (EPIEMSCO-1672)
