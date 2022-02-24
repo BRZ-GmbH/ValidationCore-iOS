@@ -148,7 +148,7 @@ public struct ValidationCore {
         trustlistService.updateDateService(ValidationClockDateService(now: validationClock))
 
         if case let .success(decodingResult) = cwtResult {
-            trustlistService.key(for: decodingResult.keyId, cwt: decodingResult.cwt, keyType: decodingResult.cwt.euHealthCert!.type) { result in
+            trustlistService.cachedKey(from: decodingResult.keyId, for: decodingResult.cwt.euHealthCert!.type, cwt: decodingResult.cwt) { result in
                 switch result {
                 case let .success(key):
                     let isSignatureValid = decodingResult.cose.hasValidSignature(for: key)
@@ -161,14 +161,14 @@ public struct ValidationCore {
         }
     }
 
-    public func validateBusinessRules(forCertificate certificate: EuHealthCert, validationClock: Date, issuedAt: Date, expiresAt: Date, countryCode: String, region: String? = nil, completionHandler: @escaping ([CertLogic.ValidationResult], Date?, ValidationError?) -> Void) {
-        businessRulesService.updateDateService(ValidationClockDateService(now: validationClock))
-        valueSetsService.updateDateService(ValidationClockDateService(now: validationClock))
+    public func validateBusinessRules(forCertificate certificate: EuHealthCert, realTime: Date, validationClock: Date, issuedAt: Date, expiresAt: Date, countryCode: String, region: String? = nil, completionHandler: @escaping ([CertLogic.ValidationResult], Date?, ValidationError?) -> Void) {
+        businessRulesService.updateDateService(ValidationClockDateService(now: realTime))
+        valueSetsService.updateDateService(ValidationClockDateService(now: realTime))
 
-        businessRulesService.businessRules { result in
+        businessRulesService.cachedBusinessRules { result in
             switch result {
             case let .success(rules):
-                self.valueSetsService.valueSets { valueSetResult in
+                self.valueSetsService.cachedValueSets { valueSetResult in
                     switch valueSetResult {
                     case let .success(valueSets):
                         if rules.isEmpty || valueSets.isEmpty {

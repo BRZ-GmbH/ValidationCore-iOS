@@ -12,6 +12,7 @@ public protocol TrustlistService {
     func key(for keyId: Data, cwt: CWT, keyType: CertType, completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void)
     func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
+    func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void)
 }
 
 class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
@@ -25,7 +26,7 @@ class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
                    dataUrl: trustlistUrl,
                    signatureUrl: signatureUrl,
                    trustAnchor: trustAnchor,
-                   updateInterval: TimeInterval(24.hour),
+                   updateInterval: TimeInterval(8.hour),
                    maximumAge: TimeInterval(72.hour),
                    fileName: TRUSTLIST_FILENAME,
                    keyAlias: TRUSTLIST_KEY_ALIAS,
@@ -47,8 +48,8 @@ class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
             self.cachedKey(from: keyId, for: keyType, cwt: cwt, completionHandler)
         }
     }
-
-    private func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
+    
+    func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
         if dataIsExpired() {
             completionHandler(.failure(.DATA_EXPIRED))
             return

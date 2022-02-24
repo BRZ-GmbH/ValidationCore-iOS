@@ -13,6 +13,7 @@ public protocol ValueSetsService {
     func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
     func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
+    func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
 }
 
 class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsService {
@@ -28,7 +29,7 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
                    dataUrl: valueSetsUrl,
                    signatureUrl: signatureUrl,
                    trustAnchor: trustAnchor,
-                   updateInterval: TimeInterval(24.hour),
+                   updateInterval: TimeInterval(8.hour),
                    maximumAge: TimeInterval(72.hour),
                    fileName: VALUE_SETS_FILENAME,
                    keyAlias: VALUE_SETS_KEY_ALIAS,
@@ -62,6 +63,15 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
 
             completionHandler(.success(self.mappedValueSets()))
         }
+    }
+    
+    func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void) {
+        if self.dataIsExpired() {
+            completionHandler(.failure(.DATA_EXPIRED))
+            return
+        }
+
+        completionHandler(.success(self.mappedValueSets()))
     }
     
     func currentValueSets() -> [String: ValueSet] {

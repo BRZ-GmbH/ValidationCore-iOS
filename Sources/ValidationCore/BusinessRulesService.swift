@@ -12,6 +12,7 @@ public protocol BusinessRulesService {
     func businessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void)
     func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
+    func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void)
 }
 
 class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, BusinessRulesService {
@@ -27,7 +28,7 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
                    dataUrl: businessRulesUrl,
                    signatureUrl: signatureUrl,
                    trustAnchor: trustAnchor,
-                   updateInterval: TimeInterval(24.hour),
+                   updateInterval: TimeInterval(8.hour),
                    maximumAge: TimeInterval(72.hour),
                    fileName: BUSINESS_RULES_FILENAME,
                    keyAlias: BUSINESS_RULES_KEY_ALIAS,
@@ -54,7 +55,7 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
         }
     }
 
-    private func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
+    func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
         if dataIsExpired() {
             completionHandler(.failure(.DATA_EXPIRED))
             return

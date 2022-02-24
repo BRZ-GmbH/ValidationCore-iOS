@@ -122,9 +122,14 @@ class SignedDataService<T: SignedData> {
                     self.updateData(for: hash, completionHandler)
                     return
                 } else {
-                    self.lastUpdate = self.dateService.now
+                    if self.dataIsExpired() {
+                        self.lastUpdate = self.dateService.now
+                        completionHandler(true, nil)
+                    } else {
+                        self.lastUpdate = self.dateService.now
+                        completionHandler(false, nil)
+                    }
                 }
-                completionHandler(false, nil)
             case let .failure(error):
                 completionHandler(false, error)
             }

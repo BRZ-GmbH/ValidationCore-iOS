@@ -56,4 +56,8 @@ public class X509TrustlistService: TrustlistService {
     }
 
     public func updateDateService(_: DateService) {}
+    
+    public func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
+        key(for: keyId, keyType: keyType, completionHandler: completionHandler)
+    }
 }
