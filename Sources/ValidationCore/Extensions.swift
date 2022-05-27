@@ -1,6 +1,6 @@
 //
 //  Extensions.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 14.04.21.
 //
@@ -11,13 +11,13 @@ extension Data {
     func asHex(useSpaces: Bool = true) -> String {
         return self.map { String(format: "%02x\(useSpaces ? " " : "")", $0) }.joined()
     }
-
-    public var bytes: [UInt8] {
+    
+    public var bytes : [UInt8] {
         return [UInt8](self)
     }
-
+    
     func base64UrlEncodedString() -> String {
-        return base64EncodedString(options: .endLineWithLineFeed)
+        return self.base64EncodedString(options: .endLineWithLineFeed)
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
@@ -33,7 +33,6 @@ public extension Date {
             return self < date
         }
     }
-
     func isAfter(_ date: Date) -> Bool {
         if #available(iOS 13.0, *) {
             return distance(to: date) < 0
@@ -44,11 +43,11 @@ public extension Date {
 }
 
 extension Int {
-    var hour: Int {
-        return minutes * 60
+    var hour : Int {
+        return self.minutes * 60
     }
-
-    var minutes: Int {
+    
+    var minutes : Int {
         return self * 60
     }
 }
@@ -65,19 +64,19 @@ extension String {
         formatter.formatOptions = .withFullDate
         return formatter.date(from: self) != nil
     }
-
+    
     func isValidIso8601DateTime() -> Bool {
         let fractionalFormatter = ISO8601DateFormatter()
         fractionalFormatter.formatOptions = .withFractionalSeconds
         return fractionalFormatter.date(from: self) != nil || ISO8601DateFormatter().date(from: self) != nil
     }
-
+    
     func conformsTo(regex: String) -> Bool {
-        return range(of: regex, options: .regularExpression) != nil
+        return self.range(of: regex, options: .regularExpression) != nil
     }
-
+    
     func isMinimalVersion(major: Int, minor: Int) -> Bool {
-        let version = split(separator: ".")
+        let version = self.split(separator: ".")
         guard version.count > 2,
               let majorVersion = Int(version[0]),
               let minorVersion = Int(version[1]) else {
@@ -100,9 +99,9 @@ extension UInt64 {
     func toDate() -> Date? {
         return Date(timeIntervalSince1970: TimeInterval(self))
     }
-
+    
     func toIso8601DateString() -> String? {
-        guard let date = toDate() else {
+        guard let date = self.toDate() else {
             return nil
         }
         return ISO8601DateFormatter().string(from: date)
@@ -116,11 +115,13 @@ extension Optional where Wrapped : Collection {
         }
         return this.count >= 1
     }
-
-    var exactlyOne: Bool {
+    
+    var exactlyOne : Bool {
         guard let this = self else {
             return false
         }
         return this.count == 1
     }
 }
+
+

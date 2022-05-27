@@ -1,6 +1,6 @@
 //
 //  ValidationError.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 07.04.21.
 //
@@ -34,7 +34,7 @@ public enum ValidationError : String, Error, Codable {
     case DATA_EXPIRED = "DATA_EXPIRED"
     
 
-    public var message: String {
+    public var message : String {
         switch self {
         case .GENERAL_ERROR: return "General error"
         case .INVALID_SCHEME_PREFIX: return "Invalid scheme prefix"

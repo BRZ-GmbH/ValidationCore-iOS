@@ -1,6 +1,6 @@
 //
 //  ValidationResult.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 07.04.21.
 //

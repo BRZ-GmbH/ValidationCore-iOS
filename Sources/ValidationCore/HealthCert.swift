@@ -1,6 +1,6 @@
 //
 //  EuHealthCert.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 14.04.21.
 //
@@ -32,8 +32,8 @@ public struct HealthCert : Codable {
             }
         }
     }
-
-    private enum CodingKeys: String, CodingKey {
+    
+    private enum CodingKeys : String, CodingKey {
         case person = "nam"
         case dateOfBirth = "dob"
         case vaccinations = "v"
@@ -42,7 +42,7 @@ public struct HealthCert : Codable {
         case vaccinationExemption = "ve"
         case version = "ver"
     }
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.person = try container.decode(Person.self, forKey: .person)
@@ -77,17 +77,17 @@ public struct Person : Codable {
         case familyName = "fn"
         case standardizedFamilyName = "fnt"
     }
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        givenName = try? container.decode(String.self, forKey: .givenName)
-        standardizedGivenName = try? container.decode(String.self, forKey: .standardizedGivenName)
-        familyName = try? container.decode(String.self, forKey: .familyName)
-        standardizedFamilyName = try container.decode(String.self, forKey: .standardizedFamilyName)
+        self.givenName = try? container.decode(String.self, forKey: .givenName)
+        self.standardizedGivenName = try? container.decode(String.self, forKey: .standardizedGivenName)
+        self.familyName = try? container.decode(String.self, forKey: .familyName)
+        self.standardizedFamilyName = try container.decode(String.self, forKey: .standardizedFamilyName)
     }
 }
 
-public struct Vaccination: Codable {
+public struct Vaccination : Codable {
     public let disease: String
     public let vaccine: String
     public let medicinialProduct: String
@@ -98,8 +98,8 @@ public struct Vaccination: Codable {
     public let country: String
     public let certificateIssuer: String
     public let certificateIdentifier: String
-
-    private enum CodingKeys: String, CodingKey {
+    
+    private enum CodingKeys : String, CodingKey {
         case disease = "tg"
         case vaccine = "vp"
         case medicinialProduct = "mp"
@@ -111,7 +111,7 @@ public struct Vaccination: Codable {
         case certificateIssuer = "is"
         case certificateIdentifier = "ci"
     }
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -128,30 +128,30 @@ public struct Vaccination: Codable {
         } else {
             self.totalDoses = try container.decode(UInt64.self, forKey: .totalDoses)
         }
-        vaccinationDate = try container.decode(String.self, forKey: .vaccinationDate)
+        self.vaccinationDate = try container.decode(String.self, forKey: .vaccinationDate)
         guard vaccinationDate.isValidIso8601Date() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
-        country = try container.decode(String.self, forKey: .country).trimmingCharacters(in: .whitespacesAndNewlines)
-        certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
-        certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
+        self.country = try container.decode(String.self, forKey: .country).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
+        self.certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
     }
 }
 
-public struct Test: Codable {
+public struct Test : Codable {
     public let disease: String
     public let type: String
     public let testName: String?
     public let manufacturer: String?
     public let timestampSample: String
-    public let timestampResult: String?
+    public let timestampResult : String?
     public let result: String
     public let testCenter: String?
     public let country: String
     public let certificateIssuer: String
     public let certificateIdentifier: String
-
-    private enum CodingKeys: String, CodingKey {
+    
+    private enum CodingKeys : String, CodingKey {
         case disease = "tg"
         case type = "tt"
         case testName = "nm"
@@ -164,14 +164,14 @@ public struct Test: Codable {
         case certificateIssuer = "is"
         case certificateIdentifier = "ci"
     }
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
-        type = try container.decode(String.self, forKey: .type).trimmingCharacters(in: .whitespacesAndNewlines)
-        testName = try? container.decode(String.self, forKey: .testName)
-        manufacturer = try? container.decode(String.self, forKey: .manufacturer).trimmingCharacters(in: .whitespacesAndNewlines)
-        timestampSample = try container.decode(String.self, forKey: .timestampSample)
+        self.disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.type = try container.decode(String.self, forKey: .type).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.testName = try? container.decode(String.self, forKey: .testName)
+        self.manufacturer = try? container.decode(String.self, forKey: .manufacturer).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.timestampSample = try container.decode(String.self, forKey: .timestampSample)
         guard timestampSample.isValidIso8601DateTime() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
@@ -182,9 +182,10 @@ public struct Test: Codable {
         self.certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
         self.certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
     }
+    
 }
 
-public struct Recovery: Codable {
+public struct Recovery : Codable {
     public let disease: String
     public let dateFirstPositiveTest: String
     public let countryOfTest: String
@@ -192,8 +193,8 @@ public struct Recovery: Codable {
     public let validFrom: String
     public let validUntil: String
     public let certificateIdentifier: String
-
-    private enum CodingKeys: String, CodingKey {
+    
+    private enum CodingKeys : String, CodingKey {
         case disease = "tg"
         case dateFirstPositiveTest = "fr"
         case countryOfTest = "co"
@@ -202,26 +203,26 @@ public struct Recovery: Codable {
         case validUntil = "du"
         case certificateIdentifier = "ci"
     }
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.disease = try container.decode(String.self, forKey: .disease).trimmingCharacters(in: .whitespacesAndNewlines)
         let dateFirstPositiveTest = try container.decode(String.self, forKey: .dateFirstPositiveTest)
         guard dateFirstPositiveTest.isValidIso8601Date() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
         self.dateFirstPositiveTest = dateFirstPositiveTest
-        countryOfTest = try container.decode(String.self, forKey: .countryOfTest).trimmingCharacters(in: .whitespacesAndNewlines)
-        validFrom = try container.decode(String.self, forKey: .validFrom)
+        self.countryOfTest = try container.decode(String.self, forKey: .countryOfTest).trimmingCharacters(in: .whitespacesAndNewlines)
+        self.validFrom = try container.decode(String.self, forKey: .validFrom)
         guard validFrom.isValidIso8601Date() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
-        validUntil = try container.decode(String.self, forKey: .validUntil)
+        self.validUntil = try container.decode(String.self, forKey: .validUntil)
         guard validUntil.isValidIso8601Date() else {
             throw ValidationError.CBOR_DESERIALIZATION_FAILED
         }
-        certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
-        certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
+        self.certificateIssuer = try container.decode(String.self, forKey: .certificateIssuer)
+        self.certificateIdentifier = try container.decode(String.self, forKey: .certificateIdentifier)
     }
 }
 

@@ -116,25 +116,29 @@ public struct ValidationCore {
     public func validate(encodedData: String, _ completionHandler: @escaping (ValidationResult) -> ()) {
         DDLogDebug("Starting validation")
         guard let unprefixedEncodedString = removeScheme(prefix: PREFIX, from: encodedData) else {
-            return .failure(.INVALID_SCHEME_PREFIX)
+            completionHandler(ValidationResult(isValid: false, metaInformation: nil, greenpass: nil, error: .INVALID_SCHEME_PREFIX))
+            return
         }
-
+        
         guard let decodedData = decode(unprefixedEncodedString) else {
-            return .failure(.BASE_45_DECODING_FAILED)
+            completionHandler(ValidationResult(isValid: false, metaInformation: nil, greenpass: nil, error: .BASE_45_DECODING_FAILED))
+            return
         }
         DDLogDebug("Base45-decoded data: \(decodedData.asHex())")
         
         guard let decompressedData = decompress(decodedData) else {
-            return .failure(.DECOMPRESSION_FAILED)
+            completionHandler(ValidationResult(isValid: false, metaInformation: nil, greenpass: nil, error: .DECOMPRESSION_FAILED))
+            return
         }
         DDLogDebug("Decompressed data: \(decompressedData.asHex())")
 
         guard let cose = cose(from: decompressedData),
               let keyId = cose.keyId else {
-            return .failure(.COSE_DESERIALIZATION_FAILED)
+            completionHandler(ValidationResult(isValid: false, metaInformation: nil, greenpass: nil, error: .COSE_DESERIALIZATION_FAILED))
+            return
         }
         DDLogDebug("KeyID: \(keyId.encode())")
-
+        
         guard let cwt = CWT(from: cose.payload),
               let euHealthCert = cwt.healthCert,
               euHealthCert.vaccinationExemption == nil else {

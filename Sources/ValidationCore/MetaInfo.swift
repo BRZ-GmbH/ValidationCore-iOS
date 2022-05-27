@@ -1,6 +1,6 @@
 //
 //  MetaInfo.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 08.06.21.
 //

@@ -1,51 +1,55 @@
 //
 //  Cose.swift
-//
+//  
 //
 //  Created by Dominik Mocher on 07.04.21.
 //
 
-import CocoaLumberjackSwift
 import Foundation
-import Security
 import SwiftCBOR
+import CocoaLumberjackSwift
+import Security
 
 struct Cose {
     private let type: CoseType
-    let protectedHeader: CoseHeader
-    let unprotectedHeader: CoseHeader?
-    let payload: CBOR
-    let signature: Data
-
-    var keyId: Data? {
-        var keyData: Data?
-        if let unprotectedKeyId = unprotectedHeader?.keyId {
-            keyData = Data(unprotectedKeyId)
-        }
-        if let protectedKeyId = protectedHeader.keyId {
-            keyData = Data(protectedKeyId)
-        }
-        return keyData
-    }
-
-    private var signatureStruct: Data? {
-        guard let header = protectedHeader.rawHeader else {
-            return nil
-        }
-
-        /* Structure according to https://tools.ietf.org/html/rfc8152#section-4.2 */
-        switch type {
-        case .sign1:
-            let context = CBOR(stringLiteral: type.rawValue)
-            let externalAad = CBOR.byteString([UInt8]()) /* no external application specific data */
-            let cborArray = CBOR(arrayLiteral: context, header, externalAad, payload)
-            return Data(cborArray.encode())
-        default:
-            DDLogError("COSE Sign messages are not yet supported.")
-            return nil
+    let protectedHeader : CoseHeader
+    let unprotectedHeader : CoseHeader?
+    let payload : CBOR
+    let signature : Data
+    
+    var keyId : Data? {
+        get {
+            var keyData : Data?
+            if let unprotectedKeyId = unprotectedHeader?.keyId {
+                keyData = Data(unprotectedKeyId)
+            }
+            if let protectedKeyId = protectedHeader.keyId {
+                keyData = Data(protectedKeyId)
+            }
+            return keyData
         }
     }
-
+    
+    private var signatureStruct : Data? {
+        get {
+            guard let header = protectedHeader.rawHeader else {
+                return nil
+            }
+            
+            /* Structure according to https://tools.ietf.org/html/rfc8152#section-4.2 */
+            switch type {
+            case .sign1:
+                let context = CBOR(stringLiteral: self.type.rawValue)
+                let externalAad = CBOR.byteString([UInt8]()) /*no external application specific data*/
+                let cborArray = CBOR(arrayLiteral: context, header, externalAad, payload)
+                return Data(cborArray.encode())
+            default:
+                DDLogError("COSE Sign messages are not yet supported.")
+                return nil
+            }
+        }
+    }
+    
     init?(from data: Data) {
         let cborType = CborType.from(data: data)
         switch cborType {
@@ -59,8 +63,8 @@ struct Cose {
             }
             self.type = type
             self.protectedHeader = protectedHeader
-            unprotectedHeader = CoseHeader(from: cose.1[1])
-            payload = cose.1[2]
+            self.unprotectedHeader = CoseHeader(from: cose.1[1])
+            self.payload = cose.1[2]
             self.signature = Data(signature)
         case .list:
             guard let coseData = try? CBOR.decode(data.bytes),
@@ -71,10 +75,10 @@ struct Cose {
                 return nil
             }
             self.protectedHeader = protectedHeader
-            unprotectedHeader = CoseHeader(fromBytestring: coseList[1]) ?? nil
-            payload = coseList[2]
+            self.unprotectedHeader = CoseHeader(fromBytestring: coseList[1]) ?? nil
+            self.payload = coseList[2]
             self.signature = Data(signature)
-            type = .sign1
+            self.type = .sign1
         case .cwt:
             guard let rawCose = try? CBORDecoder(input: data.bytes).decodeItem(),
                   let cwtCose = rawCose.unwrap() as? (CBOR.Tag, CBOR),
@@ -86,16 +90,16 @@ struct Cose {
                 return nil
             }
             self.protectedHeader = protectedHeader
-            unprotectedHeader = CoseHeader(fromBytestring: coseList[1]) ?? nil
-            payload = coseList[2]
+            self.unprotectedHeader = CoseHeader(fromBytestring: coseList[1]) ?? nil
+            self.payload = coseList[2]
             self.signature = Data(signature)
-            type = .sign1
+            self.type = .sign1
         case .unknown:
             DDLogError("Unknown CBOR type.")
             return nil
         }
     }
-
+    
     func hasValidSignature(for publicKey: SecKey) -> Bool {
         /* Only supporting Sign1 messages for the moment */
         switch type {
@@ -106,7 +110,7 @@ struct Cose {
             return false
         }
     }
-
+    
     private func hasCoseSign1ValidSignature(for key: SecKey) -> Bool {
         guard let signedData = signatureStruct else {
             DDLogError("Cannot create Sign1 structure.")
@@ -114,9 +118,9 @@ struct Cose {
         }
         return verifySignature(key: key, signedData: signedData, rawSignature: signature)
     }
-
-    private func verifySignature(key: SecKey, signedData: Data, rawSignature: Data) -> Bool {
-        var algorithm: SecKeyAlgorithm
+    
+    private func verifySignature(key: SecKey, signedData : Data, rawSignature : Data) -> Bool {
+        var algorithm : SecKeyAlgorithm
         var signature = rawSignature
         switch protectedHeader.algorithm {
         case .es256:
@@ -128,17 +132,17 @@ struct Cose {
             DDLogError("Verification algorithm not supported.")
             return false
         }
-
-        var error: Unmanaged<CFError>?
+        
+        var error : Unmanaged<CFError>?
         let result = SecKeyVerifySignature(key, algorithm, signedData as CFData, signature as CFData, &error)
         if let error = error {
             DDLogError("Signature verification error: \(error)")
         }
         return result
     }
-
+    
     // MARK: - Nested Types
-
+    
     struct CoseHeader {
         fileprivate let rawHeader : CBOR?
         let keyId : [UInt8]?
@@ -148,13 +152,13 @@ struct Cose {
             case keyId = 4
             case algorithm = 1
         }
-
-        enum Algorithm: UInt64 {
-            case es256 = 6 // -7
-            case ps256 = 36 // -37
+        
+        enum Algorithm : UInt64 {
+            case es256 = 6 //-7
+            case ps256 = 36 //-37
         }
-
-        init?(fromBytestring cbor: CBOR) {
+        
+        init?(fromBytestring cbor: CBOR){
             guard let cborMap = cbor.decodeBytestring()?.asMap(),
                   let algValue = cborMap[Headers.algorithm]?.asUInt64(),
                   let alg = Algorithm(rawValue: algValue) else {
@@ -162,27 +166,27 @@ struct Cose {
             }
             self.init(alg: alg, keyId: cborMap[Headers.keyId]?.asBytes(), rawHeader: cbor)
         }
-
+        
         init?(from cbor: CBOR) {
             let cborMap = cbor.asMap()
-            var alg: Algorithm?
+            var alg : Algorithm?
             if let algValue = cborMap?[Headers.algorithm]?.asUInt64() {
                 alg = Algorithm(rawValue: algValue)
             }
             self.init(alg: alg, keyId: cborMap?[Headers.keyId]?.asBytes())
         }
-
-        private init(alg: Algorithm?, keyId: [UInt8]?, rawHeader: CBOR? = nil) {
-            algorithm = alg
+        
+        private init(alg: Algorithm?, keyId: [UInt8]?, rawHeader : CBOR? = nil){
+            self.algorithm = alg
             self.keyId = keyId
             self.rawHeader = rawHeader
         }
     }
-
-    enum CoseType: String {
+    
+    enum CoseType : String {
         case sign1 = "Signature1"
         case sign = "Signature"
-
+        
         static func from(data: Data) -> CoseType? {
             guard let cose = try? CBORDecoder(input: data.bytes).decodeItem()?.asCose() else {
                 return nil
