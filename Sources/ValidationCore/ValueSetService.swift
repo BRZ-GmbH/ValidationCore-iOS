@@ -9,22 +9,22 @@ import CertLogic
 import Foundation
 
 public protocol ValueSetsService {
-    func currentValueSets() -> [String: ValueSet]
-    func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
+    func currentValueSets() -> [String: CertLogic.ValueSet]
+    func valueSets(completionHandler: @escaping (Swift.Result<[String: CertLogic.ValueSet], ValidationError>) -> Void)
     func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void)
     func updateDateService(_ dateService: DateService)
-    func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void)
+    func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: CertLogic.ValueSet], ValidationError>) -> Void)
 }
 
-class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsService {
+public class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsService {
     private let VALUE_SETS_FILENAME = "valuesets"
     private let VALUE_SETS_KEY_ALIAS = "valuesets_key"
     private let VALUE_SETS_KEYCHAIN_ALIAS = "valuesets_keychain"
     private let LAST_UPDATE_KEY = "last_valuesets_update"
 
-    private var parsedValueSets: [String: ValueSet]?
+    private var parsedValueSets: [String: CertLogic.ValueSet]?
 
-    init(dateService: DateService, valueSetsUrl: String, signatureUrl: String, trustAnchor: String, apiToken: String? = nil) {
+    public init(dateService: DateService, valueSetsUrl: String, signatureUrl: String, trustAnchor: String, apiToken: String? = nil) {
         super.init(dateService: dateService,
                    dataUrl: valueSetsUrl,
                    signatureUrl: signatureUrl,
@@ -39,20 +39,20 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
     }
 
     override func didUpdateData() {
-        parsedValueSets = cachedData.entries.reduce(into: [String: ValueSet]()) {
-            guard let jsonData = $1.valueSet.data(using: .utf8) else { return }
+        parsedValueSets = cachedData.valueSets.reduce(into: [String: CertLogic.ValueSet]()) {
+            guard let jsonData = $1.value.data(using: .utf8) else { return }
 
-            guard let valueSet = try? defaultDecoder.decode(ValueSet.self, from: jsonData) else { return }
+            guard let valueSet = try? defaultDecoder.decode(CertLogic.ValueSet.self, from: jsonData) else { return }
 
             $0[$1.name] = valueSet
         }
     }
 
-    private func mappedValueSets() -> [String: ValueSet] {
+    private func mappedValueSets() -> [String: CertLogic.ValueSet] {
         return parsedValueSets ?? [:]
     }
 
-    func valueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void) {
+    public func valueSets(completionHandler: @escaping (Swift.Result<[String: CertLogic.ValueSet], ValidationError>) -> Void) {
         updateDataIfNecessary { [weak self] _, _ in
             guard let self = self else { return }
 
@@ -65,7 +65,7 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
         }
     }
     
-    func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: ValueSet], ValidationError>) -> Void) {
+    public func cachedValueSets(completionHandler: @escaping (Swift.Result<[String: CertLogic.ValueSet], ValidationError>) -> Void) {
         if self.dataIsExpired() {
             completionHandler(.failure(.DATA_EXPIRED))
             return
@@ -74,7 +74,7 @@ class DefaultValueSetsService: SignedDataService<ValueSetContainer>, ValueSetsSe
         completionHandler(.success(self.mappedValueSets()))
     }
     
-    func currentValueSets() -> [String: ValueSet] {
+    public func currentValueSets() -> [String: CertLogic.ValueSet] {
         return self.mappedValueSets()
     }
 }

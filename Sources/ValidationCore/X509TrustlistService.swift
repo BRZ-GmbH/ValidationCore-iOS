@@ -13,7 +13,13 @@ public class X509TrustlistService: TrustlistService {
     let dateService: DateService
     let areValidityChecksEnabled: Bool
 
-    public init(base64Encoded signingCertificates: [Data: String], dateService: DateService? = nil, enableValidityChecks: Bool = true) {
+public class X509TrustlistService : TrustlistService {
+    
+    let signingCertificates : [TrustEntry]
+    let dateService : DateService
+    let areValidityChecksEnabled : Bool
+    
+    public init(base64Encoded signingCertificates: [Data: String], dateService : DateService? = nil, enableValidityChecks: Bool = true) {
         self.dateService = dateService ?? DefaultDateService()
         areValidityChecksEnabled = enableValidityChecks
         self.signingCertificates = signingCertificates.compactMap { keyId, certString in
@@ -50,14 +56,17 @@ public class X509TrustlistService: TrustlistService {
     public func key(for keyId: Data, cwt _: CWT, keyType: CertType, completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
         key(for: keyId, keyType: keyType, completionHandler: completionHandler)
     }
-
-    public func updateDataIfNecessary(force _: Bool, completionHandler _: @escaping (Bool, ValidationError?) -> Void) {
-        /* not used */
+    
+    public func updateDataIfNecessary(force: Bool, completionHandler: @escaping (Bool, ValidationError?) -> Void) {
+        
     }
-
-    public func updateDateService(_: DateService) {}
+    
+    public func updateDateService(_ dateService: DateService) {
+        
+    }
     
     public func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
-        key(for: keyId, keyType: keyType, completionHandler: completionHandler)
+        
     }
+    
 }

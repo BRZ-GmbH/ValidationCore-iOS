@@ -10,13 +10,7 @@ import Foundation
 import Security
 import SwiftCBOR
 
-protocol SignedData: Codable {
-    var hash: Data? { get set }
-    var isEmpty: Bool { get }
-    init()
-}
-
-class SignedDataService<T: SignedData> {
+public class SignedDataService<T: SignedData> {
     private let dataUrl: String
     private let signatureUrl: String
     private let apiToken: String?
@@ -80,7 +74,7 @@ class SignedDataService<T: SignedData> {
         removeLegacyKeychainData()
     }
 
-    func updateDateService(_ dateService: DateService) {
+    public func updateDateService(_ dateService: DateService) {
         self.dateService = dateService
     }
 

@@ -8,8 +8,8 @@
 import Foundation
 
 extension Data {
-    func humanReadable() -> String {
-        return map { String(format: "%02x ", $0) }.joined()
+    func asHex(useSpaces: Bool = true) -> String {
+        return self.map { String(format: "%02x\(useSpaces ? " " : "")", $0) }.joined()
     }
 
     public var bytes: [UInt8] {
@@ -109,8 +109,8 @@ extension UInt64 {
     }
 }
 
-extension Optional where Wrapped: Collection {
-    var moreThanOne: Bool {
+extension Optional where Wrapped : Collection {
+    var oneOrMore : Bool {
         guard let this = self else {
             return false
         }

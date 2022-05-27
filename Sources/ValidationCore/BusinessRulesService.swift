@@ -15,7 +15,7 @@ public protocol BusinessRulesService {
     func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void)
 }
 
-class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, BusinessRulesService {
+public class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, BusinessRulesService {
     private let BUSINESS_RULES_FILENAME = "businessrules"
     private let BUSINESS_RULES_KEY_ALIAS = "businessrules_key"
     private let BUSINESS_RULES_KEYCHAIN_ALIAS = "businessrules_keychain"
@@ -23,7 +23,7 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
 
     private var parsedRules: [Rule]?
 
-    init(dateService: DateService, businessRulesUrl: String, signatureUrl: String, trustAnchor: String, apiToken: String? = nil) {
+    public init(dateService: DateService, businessRulesUrl: String, signatureUrl: String, trustAnchor: String, apiToken: String? = nil) {
         super.init(dateService: dateService,
                    dataUrl: businessRulesUrl,
                    signatureUrl: signatureUrl,
@@ -38,7 +38,7 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
     }
 
     override func didUpdateData() {
-        parsedRules = cachedData.entries.compactMap {
+        parsedRules = cachedData.rules.compactMap {
             guard let jsonData = $0.rule.data(using: .utf8) else { return nil }
 
             return try? defaultDecoder.decode(Rule.self, from: jsonData)
@@ -49,13 +49,13 @@ class DefaultBusinessRulesService: SignedDataService<BusinessRulesContainer>, Bu
         return parsedRules ?? []
     }
 
-    func businessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
+    public func businessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
         updateDataIfNecessary { [weak self] _, _ in
             self?.cachedBusinessRules(completionHandler: completionHandler)
         }
     }
 
-    func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
+    public func cachedBusinessRules(completionHandler: @escaping (Swift.Result<[Rule], ValidationError>) -> Void) {
         if dataIsExpired() {
             completionHandler(.failure(.DATA_EXPIRED))
             return

@@ -9,12 +9,13 @@ import CertLogic
 import Foundation
 import SwiftyJSON
 
-public extension EuHealthCert {
-    var certificationType: CertificateType {
+public extension HealthCert {
+    var certificationType: CertificateType? {
         switch type {
         case .vaccination: return .vaccination
         case .test: return .test
         case .recovery: return .recovery
+        case .vaccinationExemption: return nil
         }
     }
 }

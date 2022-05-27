@@ -15,23 +15,39 @@ public protocol TrustlistService {
     func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void)
 }
 
-class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
+public class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
     private let TRUSTLIST_FILENAME = "trustlist"
     private let TRUSTLIST_KEY_ALIAS = "trustlist_key"
     private let TRUSTLIST_KEYCHAIN_ALIAS = "trustlist_keychain"
     private let LAST_UPDATE_KEY = "last_trustlist_update"
+    
+    private let AT_TRUSTLIST_FILENAME = "at_trustlist"
+    private let AT_TRUSTLIST_KEY_ALIAS = "at_trustlist_key"
+    private let AT_TRUSTLIST_KEYCHAIN_ALIAS = "at_trustlist_keychain"
+    private let AT_LAST_UPDATE_KEY = "at_last_trustlist_update"
+    
+    public enum TrustlistSource {
+        case euDgc
+        case atNational
+    }
 
-    init(dateService: DateService, trustlistUrl: String, signatureUrl: String, trustAnchor: String, apiToken: String? = nil) {
+    public init(dateService: DateService,
+                trustlistUrl: String,
+                signatureUrl: String,
+                trustAnchor: String,
+                source: TrustlistSource,
+                apiToken: String? = nil
+    ) {
         super.init(dateService: dateService,
                    dataUrl: trustlistUrl,
                    signatureUrl: signatureUrl,
                    trustAnchor: trustAnchor,
                    updateInterval: TimeInterval(8.hour),
                    maximumAge: TimeInterval(72.hour),
-                   fileName: TRUSTLIST_FILENAME,
-                   keyAlias: TRUSTLIST_KEY_ALIAS,
-                   legacyKeychainAlias: TRUSTLIST_KEYCHAIN_ALIAS,
-                   lastUpdateKey: LAST_UPDATE_KEY,
+                   fileName: source == .euDgc ? TRUSTLIST_FILENAME : AT_TRUSTLIST_FILENAME,
+                   keyAlias: source == .euDgc ? TRUSTLIST_KEY_ALIAS : AT_TRUSTLIST_KEY_ALIAS,
+                   legacyKeychainAlias: source == .euDgc ? TRUSTLIST_KEYCHAIN_ALIAS : AT_TRUSTLIST_KEYCHAIN_ALIAS,
+                   lastUpdateKey: source == .euDgc ? LAST_UPDATE_KEY : AT_LAST_UPDATE_KEY,
                    apiToken: apiToken)
     }
 
@@ -49,7 +65,7 @@ class DefaultTrustlistService: SignedDataService<TrustList>, TrustlistService {
         }
     }
     
-    func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
+    public func cachedKey(from keyId: Data, for keyType: CertType, cwt: CWT?, _ completionHandler: @escaping (Result<SecKey, ValidationError>) -> Void) {
         if dataIsExpired() {
             completionHandler(.failure(.DATA_EXPIRED))
             return

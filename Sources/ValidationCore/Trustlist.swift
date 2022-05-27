@@ -8,25 +8,27 @@
 import ASN1Decoder
 import Foundation
 import SwiftCBOR
+import ASN1Decoder
+import CocoaLumberjackSwift
 
-struct TrustList: SignedData, Codable {
-    let entries: [TrustEntry]
-    var hash: Data?
-
+public struct TrustList : SignedData, Codable {
+    public let entries : [TrustEntry]
+    public var hash: Data?
+    
     enum CodingKeys: String, CodingKey {
         case entries = "c"
         case hash = "signatureHash"
     }
-
-    init() {
+    
+    public init() {
         entries = [TrustEntry]()
     }
-
-    func entry(for keyId: Data) -> TrustEntry? {
-        return entries.first(where: { entry in entry.keyId == keyId })
+    
+    public func entry(for keyId: Data) -> TrustEntry? {
+        return entries.first(where: { entry in entry.keyId == keyId})
     }
-
-    var isEmpty: Bool {
+    
+    public var isEmpty: Bool {
         return entries.isEmpty
     }
 }
@@ -63,9 +65,12 @@ public struct TrustEntry: Codable {
             case .vaccination:
                 return certificate.extensionObject(oid: OID_VACCINATION) != nil || certificate.extensionObject(oid: OID_ALT_VACCINATION) != nil
             case .recovery:
-                return certificate.extensionObject(oid: OID_RECOVERY) != nil || certificate.extensionObject(oid: OID_ALT_RECOVERY) != nil
+                return nil != certificate.extensionObject(oid: OID_RECOVERY) || nil != certificate.extensionObject(oid: OID_ALT_RECOVERY)
+            case .vaccinationExemption:
+                return false 
             }
         }
+        DDLogDebug("Using trustlist certificate \(self.cert.base64EncodedString()) for validation")
         return true
     }
 
@@ -96,7 +101,11 @@ public struct TrustEntry: Codable {
         }
         return certificate.checkValidity(dateService.now)
     }
-
+    
+    public var debugInformation : SignatureCertInfo {
+        return SignatureCertInfo(certDer: cert.asHex(useSpaces: false), certBase64: cert.base64EncodedString(), cert: readableCertInfo(), keyId: self.keyId.asHex(useSpaces: false))
+    }
+    
     private func isType(in certificate: X509Certificate) -> Bool {
         return certificate.extensionObject(oid: OID_TEST) != nil
             || certificate.extensionObject(oid: OID_VACCINATION) != nil
@@ -105,12 +114,54 @@ public struct TrustEntry: Codable {
             || certificate.extensionObject(oid: OID_ALT_VACCINATION) != nil
             || certificate.extensionObject(oid: OID_ALT_RECOVERY) != nil
     }
+    
+    private func readableCertInfo() -> String {
+        guard let x509Cert = try? X509Certificate(data: cert) else {
+            return ""
+        }
+        let placeholder = "<N/A>"
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withSpaceBetweenDateAndTime, .withFullDate, .withFullTime, .withTimeZone]
+        let sigAlg = x509Cert.sigAlgName ?? x509Cert.sigAlgOID ?? placeholder
+        var serial = placeholder
+        if let serialNumber = x509Cert.serialNumber?.asHex(useSpaces: false) {
+            serial = "0x\(serialNumber)"
+        }
+        var notBefore = placeholder
+        if let notBeforeDate = x509Cert.notBefore {
+            notBefore = dateFormatter.string(from: notBeforeDate)
+        }
+        var notAfter = placeholder
+        if let notAfterDate = x509Cert.notAfter {
+            notAfter = dateFormatter.string(from: notAfterDate)
+        }
+        var version = placeholder
+        if let certVersion = x509Cert.version {
+            version = "\(certVersion)"
+        }
+        let issuer = x509Cert.issuerDistinguishedName ?? placeholder
+        let criticalExtensionOIDs = "\(x509Cert.criticalExtensionOIDs)"
+        let nonCriticalExtensionOIDs = "\(x509Cert.nonCriticalExtensionOIDs)"
+        let subject = x509Cert.subjectDistinguishedName ?? placeholder
+        return """
+               Subject: \(subject)
+               Not Before: \(notBefore)
+               Not After: \(notAfter)
+               Issuer: \(issuer)
+               Version: \(version)
+               Serial: \(serial)
+               Signature Alg: \(sigAlg)
+               Critical Extension OIDs: \(criticalExtensionOIDs)
+               Noncritical Extension OIDs: \(nonCriticalExtensionOIDs)
+               """
+    }
 }
 
 public enum CertType: String, Codable {
     case test = "t"
     case recovery = "r"
     case vaccination = "v"
+    case vaccinationExemption = "ve"
 }
 
 enum KeyType: String, Codable {
